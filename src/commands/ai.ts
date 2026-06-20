@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import * as fs from "fs";
 
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 export async function handleAi(args: string[]): Promise<void> {
   const apiKey = process.env.GEMINI_API_KEY;

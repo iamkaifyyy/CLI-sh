@@ -1,4 +1,6 @@
 import "dotenv/config";
+process.env.FORCE_COLOR = "1";
+import chalk from "chalk";
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -14,11 +16,12 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 io.on("connection", (socket) => {
   console.log("client connected");
-  socket.emit("output", "Welcome to CLI-sh\r\nCLI-sh > ");
+  socket.emit("output", chalk.cyan("Welcome to CLI-sh") + "\r\n" + chalk.green("CLI-sh > "));
 
   socket.on("input", async (line: string) => {
     const output = await handleCommand(line);
-    socket.emit("output", "\r\n" + output + "\r\n\r\nCLI-sh > ");
+    const formattedOutput = output.replace(/\r?\n/g, "\r\n");
+    socket.emit("output", "\r\n" + formattedOutput + "\r\n\r\n" + chalk.green("CLI-sh > "));
   });
 });
 

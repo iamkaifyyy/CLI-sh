@@ -57,7 +57,7 @@ rl.on("line", async (input: string) => {
     case "git":
         if(args[0] === "sync"){
             await gitSync()
-            
+            break;
         } else {
             await runSystemCommand(command,args);
             break;

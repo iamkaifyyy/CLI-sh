@@ -2,48 +2,211 @@
 <html>
 <head>
   <title>CLI-sh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
   <style>
-    body { margin: 0; background: #000; }
-    #terminal { padding: 10px; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+    
+    body {
+      margin: 0;
+      background: url('/photo.jpg') no-repeat center center;
+      background-size: cover;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Noise texture */
+    .noise-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Terminal window */
+    .mac-window {
+      width: 85%;
+      height: 75%;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #1C2230, #141A26);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0,0,0,0.3);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* Title bar */
+    .title-bar {
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      z-index: 10;
+    }
+
+    .traffic-lights {
+      position: absolute;
+      left: 24px;
+      top: 18px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .light {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+    .light.red { background: #FF5F57; }
+    .light.yellow { background: #FEBC2E; }
+    .light.green { background: #28C840; }
+
+    .title-text {
+      color: rgba(255,255,255,0.85);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      padding: 32px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    /* xterm container */
+    #terminal-container {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* To override xterm default background so it blends perfectly */
+    .xterm-viewport, .xterm-screen {
+      background-color: transparent !important;
+    }
+
+    /* Bottom Input Bar */
+    .bottom-bar {
+      width: 95%;
+      height: 56px;
+      background: rgba(62, 71, 91, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      margin: 0 auto 24px auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.1), 0 4px 15px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    .return-icon {
+      color: #FFF;
+      opacity: 0.7;
+    }
+
+    .xterm-viewport::-webkit-scrollbar {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div id="terminal"></div>
+  
+  <div class="mac-window">
+    <div class="noise-bg"></div>
+    
+    <div class="title-bar">
+      <div class="traffic-lights">
+        <div class="light red"></div>
+        <div class="light yellow"></div>
+        <div class="light green"></div>
+      </div>
+      <div class="title-text">Terminal</div>
+    </div>
+    
+    <div class="content-area">
+      <div id="terminal-container"></div>
+    </div>
+    
+    <div class="bottom-bar">
+      <div></div> 
+      <svg class="return-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 10 4 15 9 20"></polyline>
+        <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
+      </svg>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const term = new Terminal({ cursorBlink: true, fontFamily: "Menlo, monospace" });
-    term.open(document.getElementById("terminal"));
-
     const socket = io();
     let currentLine = "";
 
-    socket.on("output", (text) => {
-      term.write(text);
-    });
+    function initTerminal() {
+      if (window.termInitialized) return;
+      window.termInitialized = true;
+      
+      const term = new Terminal({ 
+        cursorBlink: true, 
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 15,
+        fontWeight: 'bold',
+        fontWeightBold: 'bold',
+        theme: {
+          background: 'transparent',
+          foreground: '#FFFFFF',
+        },
+        allowTransparency: true
+      });
+      
+      term.open(document.getElementById("terminal-container"));
 
-    term.onData((data) => {
-      const code = data.charCodeAt(0);
+      term.onData((data) => {
+        const code = data.charCodeAt(0);
 
-      if (code === 13) {
-        // Enter key pressed
-        term.write("\r\n");
-        socket.emit("input", currentLine);
-        currentLine = "";
-      } else if (code === 127) {
-        // Backspace key pressed
-        if (currentLine.length > 0) {
-          currentLine = currentLine.slice(0, -1);
-          term.write("\b \b");
+        if (code === 13) {
+          term.write("\r\n");
+          socket.emit("input", currentLine);
+          currentLine = "";
+        } else if (code === 127) {
+          if (currentLine.length > 0) {
+            currentLine = currentLine.slice(0, -1);
+            term.write("\b \b");
+          }
+        } else {
+          currentLine += data;
+          term.write(data);
         }
-      } else {
-        // Any normal character typed
-        currentLine += data;
-        term.write(data);
-      }
-    });
+      });
+
+      socket.on("output", (text) => {
+        term.write(text);
+      });
+    }
+
+    if (document.fonts) {
+      document.fonts.ready.then(initTerminal).catch(initTerminal);
+      setTimeout(initTerminal, 1000);
+    } else {
+      initTerminal();
+    }
   </script>
 </body>
 </html>
