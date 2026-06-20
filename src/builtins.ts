@@ -16,13 +16,13 @@ export function handleCd(args: string[]): void {
 
 export function handleHelp(): void {
   console.log(chalk.cyan(`
-kaif - your custom shell
+CLI-sh - your custom shell
 
 Built-ins:
   pwd            show current directory
   cd <dir>       change directory
   help           show this message
-  exit           quit kaif
+  exit           quit CLI-sh
 
 Anything else gets passed to your system shell (ls, git, etc.)
   `));

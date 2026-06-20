@@ -10,7 +10,7 @@ export async function gitSync(): Promise<void> {
     await execa("git", ["add", "."], { stdio: "inherit" });
 
     console.log(chalk.blue("→ git commit"));
-    await execa("git", ["commit", "-m", "kaif sync"], { stdio: "inherit" });
+    await execa("git", ["commit", "-m", "CLI-sh sync"], { stdio: "inherit" });
 
     console.log(chalk.blue("→ git push"));
     await execa("git", ["push"], { stdio: "inherit" });

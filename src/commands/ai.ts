@@ -10,7 +10,7 @@ export async function handleAi(args: string[]): Promise<void> {
     return;
   }
 
-  // kaif > ai explain index.ts  -> args = ["explain", "index.ts"]
+  // CLI-sh > ai explain index.ts  -> args = ["explain", "index.ts"]
   const subcommand = args[0];
   let prompt = "";
 
@@ -23,7 +23,7 @@ export async function handleAi(args: string[]): Promise<void> {
     const fileContent = fs.readFileSync(filePath, "utf-8");
     prompt = `Explain what this code does, concisely:\n\n${fileContent}`;
   } else {
-    // kaif > ai whatever question you want
+    // CLI-sh > ai whatever question you want
     prompt = args.join(" ");
   }
 
@@ -44,6 +44,10 @@ export async function handleAi(args: string[]): Promise<void> {
     });
 
     const data = await response.json();
+    if (data.error) {
+      console.log(chalk.red(`AI API Error: ${data.error.message}`));
+      return;
+    }
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     console.log(chalk.cyan(text || "No response from Gemini."));

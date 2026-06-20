@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CLI-sh</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+  <style>
+    body { margin: 0; background: #000; }
+    #terminal { padding: 10px; }
+  </style>
+</head>
+<body>
+  <div id="terminal"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const term = new Terminal({ cursorBlink: true, fontFamily: "Menlo, monospace" });
+    term.open(document.getElementById("terminal"));
+
+    const socket = io();
+    let currentLine = "";
+
+    socket.on("output", (text) => {
+      term.write(text);
+    });
+
+    term.onData((data) => {
+      const code = data.charCodeAt(0);
+
+      if (code === 13) {
+        // Enter key pressed
+        term.write("\r\n");
+        socket.emit("input", currentLine);
+        currentLine = "";
+      } else if (code === 127) {
+        // Backspace key pressed
+        if (currentLine.length > 0) {
+          currentLine = currentLine.slice(0, -1);
+          term.write("\b \b");
+        }
+      } else {
+        // Any normal character typed
+        currentLine += data;
+        term.write(data);
+      }
+    });
+  </script>
+</body>
+</html>
